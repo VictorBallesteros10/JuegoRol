@@ -1,7 +1,7 @@
 import random
 
 class AccionesCombate:
-
+    # despues del combate tienen que cambiar las estadisticas del jugador, tiene que ganar exp perder la vida que haya perdido, etc
     def __init__(self, jugador, enemigo):
         self.jugador = jugador
         self.enemigo = enemigo
@@ -32,7 +32,7 @@ class AccionesCombate:
         if eleccion == "atacar":
             self.atacar(self.enemigo, self.jugador)
         elif eleccion == "huir":
-            self.huir()
+            self.huir(self.enemigo)
             if self.huir(self.enemigo):
                 print(f"{self.enemigo.nombre} ha huido del combate.")
                 return True
@@ -77,20 +77,20 @@ class AccionesCombate:
 
     def atacar(self, atacante, objetivo):
         print(f"{atacante.nombre} ataca a {objetivo.nombre}.")
-        print("Tirada de dado para atravesar la armadura (0-20):")
-        pasarArmadura = random.randint(0, 20)
+        print("Tirada de dado para atravesar la armadura (1-20):")
+        pasarArmadura = random.randint(1, 20)
         print(f"Tirada: {pasarArmadura}")
 
         if objetivo.pasar_armadura(pasarArmadura):
             print(f"¡La armadura ha sido superada! Tirada de dado de 6 caras + fuerza de {atacante.fuerza}.")
-            daño = random.randint(0, 6) + atacante.fuerza
+            daño = random.randint(1, 6) + atacante.fuerza
             print(f"El ataque inflige {daño} puntos de daño.")
             objetivo.recibir_dano(daño)
         else:
             print(f"El ataque de {atacante.nombre} fue bloqueado por la armadura de {objetivo.nombre}.")
 
     def huir(self, personaje):
-        tiradaHuir = random.randint(0, 20)
+        tiradaHuir = random.randint(1, 20)
         if tiradaHuir > 15:
             print(f"{personaje.nombre} huye con éxito.")
             return True
@@ -98,7 +98,7 @@ class AccionesCombate:
         return False
 
     def generar_iniciativa(self):
-        iniciativa = random.randint(0, 20)
-        print("Tirada de dado para iniciativa (0-20):")
+        iniciativa = random.randint(1, 20)
+        print("Tirada de dado para iniciativa (1-20):")
         print(f"La tirada fue: {iniciativa}")
         return iniciativa

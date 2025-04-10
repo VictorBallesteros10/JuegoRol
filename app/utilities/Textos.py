@@ -18,3 +18,52 @@ Debes:
 Tu misión es guiar una aventura fascinante. Cuando recibas una solicitud de partida, comienza narrando el inicio de la historia, presentando el mundo y la situación actual. Luego, continúa dirigiendo el rumbo de los acontecimientos según lo que ocurra."""
     }
 ]
+
+enemigos = [
+    {
+      "nombre": "Goblin Desdentado",
+      "fuerza": 3,
+      "raza": "Goblin",
+      "vida": 10,
+      "armadura": 1,
+      "iniciativa": 0,
+      "nivel": 1
+    },
+    {
+      "nombre": "Orco Guerrero",
+      "fuerza": 6,
+      "raza": "Orco",
+      "vida": 18,
+      "armadura": 3,
+      "iniciativa": 0,
+      "nivel": 2
+    },
+    {
+      "nombre": "No-Muerto",
+      "fuerza": 8,
+      "raza": "Espectro",
+      "vida": 25,
+      "armadura": 5,
+      "iniciativa": 0,
+      "nivel": 3
+    },
+    {
+      "nombre": "Caballero Oscuro",
+      "fuerza": 11,
+      "raza": "Humano Maldito",
+      "vida": 35,
+      "armadura": 8,
+      "iniciativa": 0,
+      "nivel": 4
+    },
+    {
+      "nombre": "Señor de los Dragones",
+      "fuerza": 15,
+      "raza": "Dragón",
+      "vida": 50,
+      "armadura": 12,
+      "iniciativa": 0,
+      "nivel": 5
+    }
+    ]
+

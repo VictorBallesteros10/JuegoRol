@@ -1,6 +1,9 @@
 import random
+
+from app.model.Enemigo import Enemigo
 from app.utilities.Textos import instrucciones
 from app.service.AccionesCombate import AccionesCombate
+from app.utilities.Textos import enemigos
 
 class GameMasterAI:
     def __init__(self, ia_instance, jugador):
@@ -10,10 +13,6 @@ class GameMasterAI:
         self.eventos_disponibles = ["combate", "objeto", "nada"]
         self.eventos_usados = []
         self.jugador = jugador
-
-    def generar_jugador(self):
-        self.jugador.nombre = input()
-        self.jugador.vida = random.randint()
 
     def narrar_escena(self, texto):
         """La IA genera y describe dinámicamente lo que está pasando en la historia."""
@@ -41,7 +40,7 @@ class GameMasterAI:
         else:
             prompt = {"role": "user", "content": "Describe un momento tranquilo en el que va avanzando la misión y hay una toma de decisiones relevantes para la misión."}
 
-        evento_texto = self.ia.generar_texto(self.historia + [prompt], max_tokens=500)
+        evento_texto = self.ia.generar_texto(self.historia + [prompt], max_tokens=100)#voy a poner mas
         self.narrar_escena(evento_texto)
         if evento == "combate":
             self.iniciar_combate()
@@ -67,7 +66,7 @@ class GameMasterAI:
     def describir_entorno(self):
         """Genera dinámicamente una descripción del lugar actual."""
         prompt = {"role": "user", "content": "Describe el entorno actual de la partida."}
-        descripcion = self.ia.generar_texto(self.historia + [prompt], max_tokens=500)
+        descripcion = self.ia.generar_texto(self.historia + [prompt], max_tokens=100)#voy a poner mas
         self.narrar_escena(descripcion)
 
     def anunciar_descubrimiento(self):
@@ -79,7 +78,19 @@ class GameMasterAI:
     def iniciar_combate(self):
         """Simula el inicio de un combate."""
         print("estoy en un combate")
-        AccionesCombate.iniciar_combate(self.ia)
+        enemigo_elegido = enemigos[0]  # Esto es un diccionario
+        enemigo = Enemigo(
+            nombre=enemigo_elegido["nombre"],
+            fuerza=enemigo_elegido["fuerza"],
+            raza=enemigo_elegido["raza"],
+            vida=enemigo_elegido["vida"],
+            armadura=enemigo_elegido["armadura"],
+            iniciativa=enemigo_elegido["iniciativa"],
+            nivel=enemigo_elegido["nivel"]
+        )
+
+        combate = AccionesCombate(self.jugador, enemigo)
+        combate.iniciar_combate()
         prompt = {"role": "user", "content": "Describe el inicio de un combate."}
         combate_texto = self.ia.generar_texto(self.historia + [prompt], max_tokens=100)
         self.narrar_escena(combate_texto)

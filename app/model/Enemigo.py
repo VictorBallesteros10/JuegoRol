@@ -1,6 +1,6 @@
 class Enemigo:
 
-    def __init__(self, nombre, fuerza, raza, vida, armadura, iniciativa):
+    def __init__(self, nombre, fuerza, raza, vida, armadura, iniciativa, nivel):
 
         self.nombre = nombre
         self.fuerza = fuerza
@@ -8,6 +8,7 @@ class Enemigo:
         self.vida = vida
         self.armadura = armadura
         self.iniciativa = iniciativa
+        self.nivel = nivel
 
     def recibir_dano(self, daño_efectivo):
         self.vida -= daño_efectivo
