@@ -24,7 +24,12 @@ def iniciar_juego():
     gm.decidir_proximo_paso()
 
     while True:
-        opcion = input("¿Qué quieres hacer? ")
-        gm.resolver_decision_jugador(opcion)
-        gm.decidir_proximo_paso()
+        opcion = input("¿Qué quieres hacer? ").lower()
+
+        if opcion == "estadisticas":
+            jugador.mostrar_estado()
+        else:
+            gm.resolver_decision_jugador(opcion)
+            gm.decidir_proximo_paso()
+
 ##vamos a poner que pueda elegir donde quiere que se desarrolle su historia pasandole un paramtro al prompt antes de mandarlo

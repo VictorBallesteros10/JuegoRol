@@ -53,6 +53,7 @@ class Jugador:
         print(f"Jugador: {self.nombre}")
         print(f"Raza: {self.raza}")
         print(f"Vida: {self.vida}")
+        print(f"Fuerza: {self.fuerza}")
         print(f"Armadura: {self.armadura}")
         print(f"Iniciativa: {self.iniciativa}")
         print(f"Experiencia: {self.experiencia}")
