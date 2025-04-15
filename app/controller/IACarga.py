@@ -11,7 +11,7 @@ class IA:
     def cargar_modelo(self):
         """Método para cargar el modelo en LMStudio."""
         try:
-            directorio_lm_studio = r"C:\Users\vballesteros\AppData\Local\Programs\LM Studio"
+            directorio_lm_studio = r"C:\Users\jotxilla\AppData\Local\Programs\LM Studio" # Cambia esto a la ruta correcta de tu instalación de LMStudio
             # Desactivar el modelo actual
             self.hermes_process = subprocess.Popen(
                 ['lms', 'unload', 'hermes-3-llama-3.2-3b'],

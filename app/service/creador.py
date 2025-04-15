@@ -1,5 +1,5 @@
 import random
-
+#lo cambio por creador_visual para hacerlo en una panrtalla a parte
 def obtener_valor_personalizado_o_aleatorio(mensaje, fijo, aleatorio_min, aleatorio_max):
     eleccion = input(f"{mensaje} (sí/no): ").strip().lower()
     if eleccion == "sí" or eleccion == "si":
@@ -17,7 +17,7 @@ def crear_jugador_desde_input():
 
     raza = input("Introduce tu raza: ")
 
-    vida = input("¿Quieres que tu vida sea 11? elige si, o tira 2 dados de 8 caras para determinar tu vida, entonces di no (sí/no): ").strip().lower()
+    vida = input("¿Quieres que tu vida sea 13? elige si, o tira 2 dados de 8 caras para determinar tu vida, entonces di no (sí/no): ").strip().lower()
     vida = 13 if vida in ["sí", "si"] else random.randint(8, 16)
 
     armadura = 0

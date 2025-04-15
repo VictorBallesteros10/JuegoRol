@@ -1,35 +1,39 @@
+import sys
+
+from PyQt6.QtWidgets import QApplication
+
 from app.controller.GameMasterAI import GameMasterAI
 from app.controller.IACarga import IA
 from app.model.Jugador import Jugador
-from app.service.creador import crear_jugador_desde_input
+from app.view.interfaz import GameUI
+from app.view.Creador_visual import PlayerCreationDialog
 
 def iniciar_juego():
-    print("Bienvenido al Juego de Rol")
+    app = QApplication(sys.argv)
+
+    # Carga de modelo
     ia = IA()
-    valores_jugador = crear_jugador_desde_input()
-    jugador = Jugador(
-        nombre=valores_jugador["nombre"],
-        fuerza=valores_jugador["fuerza"],
-        raza=valores_jugador["raza"],
-        vida=valores_jugador["vida"],
-        armadura=valores_jugador["armadura"],
-        iniciativa=valores_jugador["iniciativa"],
-        experiencia=valores_jugador["experiencia"],
-        nivel=valores_jugador["nivel"],
-        equipamiento=valores_jugador["equipamiento"]
-    )
     ia.cargar_modelo()
-    gm = GameMasterAI(ia_instance=ia, jugador=jugador)  # Asegúrate de pasar la instancia de IA
-    gm.describir_entorno()
-    gm.decidir_proximo_paso()
 
-    while True:
-        opcion = input("¿Qué quieres hacer? ").lower()
+    # Diálogo de creación de personaje
+    crear_personaje = PlayerCreationDialog(None)
+    if crear_personaje.exec():
+        datos_jugador = crear_personaje.get_datos_personaje()
+        jugador = Jugador(**datos_jugador)
 
-        if opcion == "estadisticas":
-            jugador.mostrar_estado()
-        else:
-            gm.resolver_decision_jugador(opcion)
-            gm.decidir_proximo_paso()
+        # Crear GameMasterAI con jugador
+        game_master = GameMasterAI(ia_instance=ia, jugador=jugador)
 
+        # Lanzar interfaz de juego
+        ventana = GameUI(game_master)
+        ventana.show()
+
+
+        sys.exit(app.exec())
+    else:
+        print("Creación de personaje cancelada.")
+        sys.exit()
+
+if __name__ == "__main__":
+    iniciar_juego()
 ##vamos a poner que pueda elegir donde quiere que se desarrolle su historia pasandole un paramtro al prompt antes de mandarlo

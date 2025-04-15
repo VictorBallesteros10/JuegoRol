@@ -18,4 +18,4 @@ def start_conversation():
 
     respuesta_ia = ia_instance.generar_texto(mensaje_usuario)
 
-    return jsonify({"response": respuesta_ia})
+    return jsonify({"resouesta": respuesta_ia})

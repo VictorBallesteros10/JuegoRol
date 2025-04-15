@@ -9,6 +9,7 @@ if __name__ == "__main__":
     print("Iniciando servidor Flask y juego de rol...")
 
     flask_thread = threading.Thread(target=lanzar_flask)
+    flask_thread.daemon = True  # Esto es importante para cerrar Flask cuando cierres el juego
     flask_thread.start()
 
     iniciar_juego()
