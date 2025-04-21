@@ -52,6 +52,7 @@ class GameUI(QWidget):
     def iniciar_juego(self):
         introduccion= self.game_master.describir_entorno()
         self.añadir_texto_juego(introduccion)
+        print(f"{introduccion}--------juego iniciado")
 
     def añadir_texto_juego(self, text):
         self.story_text.append(text)

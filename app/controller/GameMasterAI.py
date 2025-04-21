@@ -7,7 +7,7 @@ from app.view.vista_combate import CombateDialog
 
 class GameMasterAI:
     def __init__(self, ia_instance, jugador):
-        self.historia = instrucciones  # Aquí se guarda el historial completo del rol
+        self.historia = instrucciones  # Aquí se guarda el historial completo de la partida
         self.ia = ia_instance
         self.interacciones = 0
         self.eventos_disponibles = ["combate", "objeto", "nada"]
@@ -36,14 +36,17 @@ class GameMasterAI:
     def activar_evento(self, evento):
         #Ejecuta el evento elegido por la IA
         if evento == "combate":
-            prompt = {"role": "user", "content": "Describe un combate emocionante en un juego de rol."}
+            prompt = {"role": "system", "content": "Describe un combate emocionante que tenga sentido en el contexto de la historia que se esta viviendo."}
+            print("------- combate -------")
         elif evento == "objeto":
-            prompt = {"role": "user", "content": "Describe el hallazgo de un objeto misterioso en un juego de rol que añada armadura o fuerza."}
+            prompt = {"role": "system", "content": "Describe el hallazgo de un objeto misterioso en un juego de rol que añada armadura o fuerza que tenga sentido en el contexto de la historia que se esta viviendo."}
+            print("------- objeto -------")
         else:
-            prompt = {"role": "user", "content": "Describe un momento tranquilo en el que va avanzando la misión y hay una toma de decisiones relevantes para la misión."}
+            prompt = {"role": "system", "content": "Describe un momento tranquilo en el que va avanzando la misión y hay una toma de decisiones relevantes para la misión."}
 
         evento_texto = self.ia.generar_texto(self.historia + [prompt], max_tokens=500)
         respuesta = self.narrar_escena(evento_texto)
+        print(f"------- esta es la respuesta -------{respuesta}")
         if evento == "combate":
             self.iniciar_combate()
         elif evento == "objeto":
@@ -71,7 +74,8 @@ class GameMasterAI:
 
     def describir_entorno(self):
         #Genera dinámicamente una descripción del lugar actual
-        prompt = {"role": "user", "content": "Describe el entorno actual de la partida."}
+        prompt = {"role": "system", "content": "Describe el entorno actual de la partida."}
+        print(f"------- entorno -------{prompt}")
         descripcion = self.ia.generar_texto(self.historia + [prompt], max_tokens=800)
         respuesta= self.narrar_escena(descripcion)
         return respuesta
