@@ -3,7 +3,6 @@ import requests
 from app.service.Gestion_historia import GestionHistoria
 from app.utilities.Textos import instrucciones
 
-
 class IA:
     def __init__(self):
         self.hermes_process = None
@@ -11,9 +10,8 @@ class IA:
         self.Gestion_historia = GestionHistoria(self.lmstudio_url)
 
     def cargar_modelo(self):
-        """Método para cargar el modelo en LMStudio."""
         try:
-            directorio_lm_studio = r"C:\Users\jotxilla\AppData\Local\Programs\LM Studio" # Cambia esto a la ruta correcta de tu instalación de LMStudio
+            directorio_lm_studio = r"C:\Users\jotxilla\AppData\Local\Programs\LM Studio"
             # Desactivar el modelo actual
             self.hermes_process = subprocess.Popen(
                 ['lms', 'unload', 'hermes-3-llama-3.2-3b'],
@@ -32,12 +30,26 @@ class IA:
         except Exception as e:
             print(f"Error al cargar el modelo: {e}")
 
-    def generar_texto(self, message, max_tokens=1000):
-        #instrucciones.append({"role": "user", "content": message}) #creo que no es necesario por que le paso instrucciones por el otro lado
-        try:
-            response = requests.post(self.lmstudio_url, json={"messages": message, "max_tokens": max_tokens, "temperature": 0.2})
-            response_data = response.json()
-            return response_data["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            return f"Error al generar el evento: {str(e)}"
+    def generar_texto(self, prompt) -> str:
 
+        if isinstance(prompt, list):
+            messages = prompt
+        else:
+            messages = instrucciones + [{"role": "user", "content": prompt}]
+
+        payload = {
+            "model": "hermes-3-llama-3.2-3b",
+            "messages": messages
+        }
+        resp = requests.post(self.lmstudio_url, json=payload)
+        data = resp.json()
+
+        choices = data.get("choices")
+        if not choices or not isinstance(choices, list):
+            raise RuntimeError(f"Respuesta inesperada de la IA: {data}")
+
+        return choices[0]["message"]["content"].strip()
+
+    def agregar_accion(self, accion: str, respuesta: str):
+
+        self.Gestion_historia.registrar_accion(accion, respuesta)

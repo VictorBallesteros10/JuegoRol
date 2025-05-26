@@ -1,39 +1,57 @@
 import sys
+from PyQt6.QtWidgets import QApplication, QDialog
 
-from PyQt6.QtWidgets import QApplication
-
-from app.controller.GameMasterAI import GameMasterAI
 from app.controller.IACarga import IA
+from app.controller.GameMasterAI import MaestroDeJuegoIA
 from app.model.Jugador import Jugador
-from app.view.interfaz import GameUI
-from app.view.Creador_visual import PlayerCreationDialog
+from app.view.Login import DialogoInicioSesion
+from app.view.Partidas_guardadas import DialogoPartidasGuardadas
+from app.view.Creador_visual import DialogoCreacionPersonaje
+from app.view.interfaz import IUPrincipalJuego
+from app.service.GestorBBDD import AdministradorBaseDatosSA
 
 def iniciar_juego():
     app = QApplication(sys.argv)
 
-    # Carga de modelo
-    ia = IA()
-    ia.cargar_modelo()
-
-    # Diálogo de creación de personaje
-    crear_personaje = PlayerCreationDialog(None)
-    if crear_personaje.exec():
-        datos_jugador = crear_personaje.get_datos_personaje()
-        jugador = Jugador(**datos_jugador)
-
-        # Crear GameMasterAI con jugador
-        game_master = GameMasterAI(ia_instance=ia, jugador=jugador)
-
-        # Lanzar interfaz de juego
-        ventana = GameUI(game_master)
-        ventana.show()
-
-
-        sys.exit(app.exec())
-    else:
-        print("Creación de personaje cancelada.")
+    dialogo_login = DialogoInicioSesion()
+    if dialogo_login.exec() != QDialog.DialogCode.Accepted:
         sys.exit()
+    id_usuario = dialogo_login.id_usuario
+
+    administrador_bd = AdministradorBaseDatosSA()
+
+    dialogo_partidas = DialogoPartidasGuardadas(id_usuario)
+    if dialogo_partidas.exec() != QDialog.DialogCode.Accepted:
+        sys.exit()
+    id_partida = dialogo_partidas.id_partida
+
+    if id_partida:
+        datos = administrador_bd.cargar_partida(id_partida)
+        universo = datos.get("universo", "Mundo de fantasía")
+        historia = datos.get("historia", "")
+
+        datos_personaje = datos.get("personaje", {})
+        jugador = Jugador(**datos_personaje)
+
+    else:
+        dialogo_crear = DialogoCreacionPersonaje(None)
+        if dialogo_crear.exec() != QDialog.DialogCode.Accepted:
+            sys.exit()
+        datos_personaje = dialogo_crear.obtener_datos_personaje()
+        universo = datos_personaje.pop("universo")
+        jugador  = Jugador(**datos_personaje)
+        administrador_bd.guardar_partida(id_usuario, jugador.nombre, {**datos_personaje, "universo": universo})
+        historia = ""
+
+    interfaz_ia = IA()
+    interfaz_ia.cargar_modelo()
+    print(historia)
+    print(jugador.nombre)
+    maestro     = MaestroDeJuegoIA(interfaz_ia, jugador, universo, id_usuario,historia)
+
+    ventana = IUPrincipalJuego(maestro)
+    ventana.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     iniciar_juego()
-##vamos a poner que pueda elegir donde quiere que se desarrolle su historia pasandole un paramtro al prompt antes de mandarlo

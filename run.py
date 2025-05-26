@@ -13,3 +13,8 @@ if __name__ == "__main__":
     flask_thread.start()
 
     iniciar_juego()
+    #no consigo que la interfaz cambie la imagen ni la musica en pelea
+    #en el turno del enemigo debera ser la ia la que decida que hacer
+    #si decido huir y falllo la tirada el combate continuara
+    #quizas el prompt de despues de la pelea deberia tener contexto de la pelea y de la historia ó que salga una respuesta despues
+    #de la pelea y otra de la historia con todo

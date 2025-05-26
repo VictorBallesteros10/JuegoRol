@@ -1,104 +1,101 @@
+# app/service/AccionesCombate.py
+
 import random
 
-class AccionesCombate:
-    # despues del combate tienen que cambiar las estadisticas del jugador, tiene que ganar exp perder la vida que haya perdido, etc
+class MecanicaCombate:
     def __init__(self, jugador, enemigo):
         self.jugador = jugador
         self.enemigo = enemigo
+        self.es_turno_jugador = False
 
-    def turno_jugador(self):
-        print(f"{self.jugador.nombre} es tu turno, elige un movimiento: ")
+    def generar_iniciativa(self) -> int:
+        return random.randint(1, 20)
 
-        while True:
-            eleccion = input("atacar o huir: ").lower()
-            if eleccion == "atacar":
-                self.atacar(self.jugador, self.enemigo)
-                break
-            elif eleccion == "huir":
-                if self.huir(self.jugador):
-                    print(f"{self.jugador.nombre} ha huido del combate.")
-                    return True
-                break
-            else:
-                print("Opción no válida. Elige 'atacar' o 'huir'.")
-
-        return False
-
-    def turno_enemigo(self):
-        print(f"{self.enemigo.nombre} tiene turno:")
-        # Aquí la IA del enemigo decide qué hacer
-        eleccion = random.choice(["atacar", "huir"])#este ramdon hay que quitarlo, la ia debe gestionarlo
-
-        if eleccion == "atacar":
-            self.atacar(self.enemigo, self.jugador)
-        elif eleccion == "huir":
-            self.huir(self.enemigo)
-            if self.huir(self.enemigo):
-                print(f"{self.enemigo.nombre} ha huido del combate.")
-                return True
-
-        return False
-
-    def iniciar_combate(self):
-        huir = False
-        iniciativaJugador = self.generar_iniciativa() + self.jugador.iniciativa
-        print(f"{self.jugador.nombre} tienes {iniciativaJugador} de iniciativa.")
-        iniciativaEnemigo = self.generar_iniciativa() + self.enemigo.iniciativa
-        print(f"{self.enemigo.nombre} tiene {iniciativaEnemigo} de iniciativa.")
-
-        if iniciativaJugador >= iniciativaEnemigo:
-            print("Comienzas atacando")
+    def iniciar_mecanica_combate(self) -> list[str]:
+        registro = []
+        ini_jugador = self.generar_iniciativa() + self.jugador.iniciativa
+        ini_enemigo = self.generar_iniciativa() + self.enemigo.iniciativa
+        registro.append(f"{self.jugador.nombre} tiene iniciativa {ini_jugador}.")
+        registro.append(f"{self.enemigo.nombre} tiene iniciativa {ini_enemigo}.")
+        if ini_jugador >= ini_enemigo:
+            registro.append("Comienza el jugador.")
+            self.es_turno_jugador = True
         else:
-            print("El enemigo comienza atacando")
+            registro.append("Comienza el enemigo.")
+            self.es_turno_jugador = False
+        return registro
 
-        while self.jugador.vida > 0 and self.enemigo.vida > 0 and not huir:
-            if iniciativaJugador >= iniciativaEnemigo:
-                huir = self.turno_jugador()
-                if self.enemigo.vida <= 0:
-                    print(f"{self.enemigo.nombre} ha sido derrotado.")
-                    break
-                if huir:
-                    break
-                huir = self.turno_enemigo()
-                if self.jugador.vida <= 0:
-                    print(f"{self.jugador.nombre} has sido derrotado.")
-                    break
+    def ejecutar_turno_jugador(self, decision: str) -> dict:
+        registro = []
+
+        if self.jugador.vida <= 0:
+            return {
+                "tipo": "muerte",
+                "log": ["Tus heridas son mortales. El mundo se desvanece mientras caes. Has muerto."],
+            }
+
+        decision = decision.strip().lower()
+        if decision in ("huir", "escapar"):
+            huido, mensaje = self._intentar_huir(self.jugador)
+            registro.append(mensaje)
+            if huido:
+                return {'tipo': 'huida', 'log': registro}
             else:
-                huir = self.turno_enemigo()
-                if self.jugador.vida <= 0:
-                    print(f"{self.jugador.nombre} has sido derrotado.")
-                    break
-                if huir:
-                    break
-                huir = self.turno_jugador()
-                if self.enemigo.vida <= 0:
-                    print(f"{self.enemigo.nombre} ha sido derrotado.")
-                    break
+                # Falló la huida: pierde turno
+                self.es_turno_jugador = False
+                return {'tipo': 'continuar', 'log': registro}
 
-    def atacar(self, atacante, objetivo):
-        print(f"{atacante.nombre} ataca a {objetivo.nombre}.")
-        print("Tirada de dado para atravesar la armadura (1-20):")
-        pasarArmadura = random.randint(1, 20)
-        print(f"Tirada: {pasarArmadura}")
+        # Decide atacar
+        _, subregistro = self._realizar_ataque(self.jugador, self.enemigo)
+        registro.extend(subregistro)
+        if self.enemigo.vida <= 0:
+            return {'tipo': 'victoria', 'log': registro}
+        # Tras atacar, cede el turno
+        self.es_turno_jugador = False
+        return {'tipo': 'continuar', 'log': registro}
 
-        if objetivo.pasar_armadura(pasarArmadura):
-            print(f"¡La armadura ha sido superada! Tirada de dado de 6 caras + fuerza de {atacante.fuerza}.")
+    def ejecutar_turno_enemigo(self) -> dict:
+        registro = []
+
+        # Si el jugador ya está muerto, termina inmediatamente
+        if self.jugador.vida <= 0:
+            return {'tipo': 'derrota', 'log': ["El jugador no tiene vida y cae derrotado."]}
+
+        # Si la vida del enemigo es baja, intenta huir
+        if self.enemigo.vida <= 3:
+            huido, mensaje = self._intentar_huir(self.enemigo)
+            registro.append(mensaje)  # siempre registramos el mensaje
+            if huido:
+                return {'tipo': 'huida_enemigo', 'log': registro}
+            else:
+                # huida fallida: fin de turno, vuelve al jugador
+                return {'tipo': 'continuar', 'log': registro}
+
+        # Si no entra en huida, ataca
+        _, subregistro = self._realizar_ataque(self.enemigo, self.jugador)
+        registro.extend(subregistro)
+
+        if self.jugador.vida <= 0:
+            return {'tipo': 'derrota', 'log': registro}
+        # Tras atacar, pasa el turno al jugador
+        self.es_turno_jugador = True
+        return {'tipo': 'continuar', 'log': registro}
+
+    def _realizar_ataque(self, atacante, defensor):
+        registro = [f"{atacante.nombre} ataca a {defensor.nombre}"]
+        tirada = random.randint(1, 20)
+        registro.append(f"Tirada de armadura: {tirada}")
+        if defensor.pasar_armadura(tirada):
             daño = random.randint(1, 6) + atacante.fuerza
-            print(f"El ataque inflige {daño} puntos de daño.")
-            objetivo.recibir_dano(daño)
+            defensor.recibir_dano(daño)
+            registro.append(f"Inflige {daño} de daño. Vida {defensor.nombre}={defensor.vida}")
         else:
-            print(f"El ataque de {atacante.nombre} fue bloqueado por la armadura de {objetivo.nombre}.")
+            registro.append("El ataque fue bloqueado.")
+        return False, registro
 
-    def huir(self, personaje):
-        tiradaHuir = random.randint(1, 20)
-        if tiradaHuir > 15:
-            print(f"{personaje.nombre} huye con éxito.")
-            return True
-        print(f"{personaje.nombre} no ha logrado huir.")
-        return False
-
-    def generar_iniciativa(self):
-        iniciativa = random.randint(1, 20)
-        print("Tirada de dado para iniciativa (1-20):")
-        print(f"La tirada fue: {iniciativa}")
-        return iniciativa
+    def _intentar_huir(self, personaje):
+        tirada = random.randint(1, 20)
+        if tirada > 15:
+            return True, f"{personaje.nombre} huye con éxito."
+        else:
+            return False, f"{personaje.nombre} no logra huir."

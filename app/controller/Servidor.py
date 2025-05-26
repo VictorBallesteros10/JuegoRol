@@ -6,7 +6,6 @@ ia_instance = IA()
 
 @app.route('/conversacion', methods=['POST'])
 def start_conversation():
-    """Recibe un mensaje del usuario y lo envía a la IA."""
     if ia_instance.hermes_process is None:
         ia_instance.cargar_modelo()
 
