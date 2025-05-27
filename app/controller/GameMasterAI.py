@@ -61,12 +61,14 @@ class MaestroDeJuegoIA:
     def determinar_tipo_evento(self) -> str:
         if self.combate_activo:
             return "combate"
-        siguiente = self.contador_decisiones + 1
-        if siguiente <= 3:
+        self.contador_decisiones += 1
+        siguiente = self.contador_decisiones
+        print(siguiente)
+        if siguiente <= 1:
             return "narrativa"
         if siguiente == 4:
             return "objeto"
-        if siguiente == 5:
+        if siguiente == 2:
             return "combate"
         if 6 <= siguiente <= 7:
             return "narrativa"
@@ -106,10 +108,11 @@ class MaestroDeJuegoIA:
             }
 
         if tipo_evento in ("combate", "combate_final"):
-            idx = 0 if tipo_evento == "combate" else -1
+            idx = 0 if tipo_evento == "combate" else random.randint(1, len(enemigos) - 1)
             datos = enemigos[idx]
             self.enemigo_actual = Enemigo(**datos)
 
+            # Narración de aparición
             prompt_intro = (
                 "Relata en un solo fragmento de prosa la irrupción épica de "
                 f"{self.enemigo_actual.nombre} ante el héroe."
@@ -117,16 +120,20 @@ class MaestroDeJuegoIA:
             intro = self.formatear_narracion(
                 self.interfaz_ia.generar_texto(prompt_intro)
             )
+
+            # Inicializamos la mecánica de combate
             self.mecanica_combate = MecanicaCombate(
                 self.jugador, self.enemigo_actual
             )
-            registro_iniciativa = self.mecanica_combate.iniciar_mecanica_combate()
+            init_log = self.mecanica_combate.iniciar_mecanica_combate()
+            # Ya sabemos quién empieza:
+            primer_turno = "combate_jugador" if self.mecanica_combate.es_turno_jugador else "combate_enemigo"
+
             self.combate_activo = True
-            clave = 'combate_inicio' if tipo_evento == "combate" else 'combate_final_inicio'
             return {
-                'tipo': clave,
+                'tipo': primer_turno,
                 'intro': intro,
-                'init_log': registro_iniciativa
+                'log': init_log
             }
 
         if tipo_evento == "final":
@@ -140,58 +147,85 @@ class MaestroDeJuegoIA:
         return {'tipo': tipo_evento, 'texto': ""}
 
     def procesar_decision_jugador(self, decision: str) -> dict:
-        self.contador_decisiones += 1
+        #self.contador_decisiones += 1 no necesario, se gestiona arriba?
 
+        # --- COMBATE ACTIVO ---
         if self.combate_activo:
-            if self.mecanica_combate.es_turno_jugador:
-                resultado = self.mecanica_combate.ejecutar_turno_jugador(decision)
-                if resultado['tipo'] == 'continuar':
-                    self.mecanica_combate.es_turno_jugador = False
+            mc = self.mecanica_combate
 
-                    return {'tipo':'combate_jugador','log':resultado['log']}
+            # TURNO DEL JUGADOR O DEL ENEMIGO
+            if mc.es_turno_jugador:
+                resultado = mc.ejecutar_turno_jugador(decision)
+            else:
+                resultado = mc.ejecutar_turno_enemigo()
 
-                self.combate_activo = False
-                if resultado['tipo'] == 'huida':
-                    outro = self.formatear_narracion(
-                        self.interfaz_ia.generar_texto(
-                            f"{self.jugador.nombre} huye del combate."
-                        )
-                    )
-                    self.gestion_historia.registrar_accion(decision, outro)
-                    self._persistir_estado()
-                    return {'tipo':'combate_huido','log':resultado['log'],'outro':outro}
+            # Si sigue en combate, devolvemos directamente
+            if resultado['tipo'] in ('combate_jugador', 'combate_enemigo'):
+                return resultado
+
+            # Fin de combate, desactivamos
+            self.combate_activo = False
+
+            # Mapeos de resultados finales de combate
+            if resultado['tipo'] == 'victoria':
                 outro = self.formatear_narracion(
                     self.interfaz_ia.generar_texto("Narra las consecuencias de la victoria.")
                 )
+                # Registra la acción y persiste el estado tras la victoria
                 self.gestion_historia.registrar_accion(decision, outro)
-                self._persistir_estado()
-                return {'tipo':'combate_victoria','log':resultado['log'],'outro':outro}
-            else:
-                resultado = self.mecanica_combate.ejecutar_turno_enemigo()
-                if resultado['tipo'] == 'continuar':
-                    self.mecanica_combate.es_turno_jugador = True
-                    return {'tipo':'combate_enemigo','log':resultado['log']}
-                # derrota
-                self.combate_activo = False
-                outro = self.formatear_narracion(
-                    self.interfaz_ia.generar_texto("Narra la derrota del protagonista.")
+                self.persistir_estado()
+                return {
+                    'tipo': 'combate_victoria',
+                    'log': resultado['log'],
+                    'outro': outro
+                }
+
+            if resultado['tipo'] in ('huida', 'huida_enemigo'):
+                who = 'jugador' if resultado['tipo'] == 'huida' else 'enemigo'
+                otro_texto = (
+                    f"{self.jugador.nombre} huye del combate."
+                    if who == 'jugador'
+                    else f"{self.enemigo_actual.nombre} huye del combate."
                 )
-                self.gestion_historia.registrar_accion('turno_enemigo', outro)
-                self._persistir_estado()
-                return {'tipo':'muerte','log':resultado['log'],'outro':outro}
+                outro = self.formatear_narracion(
+                    self.interfaz_ia.generar_texto(otro_texto)
+                )
+                # Registrar y persistir también la huida
+                self.gestion_historia.registrar_accion(decision, outro)
+                self.persistir_estado()
+                return {
+                    'tipo': 'combate_huido',
+                    'log': resultado['log'],
+                    'outro': outro
+                }
+
+            if resultado['tipo'] == 'muerte':
+                outro = self.formatear_narracion(
+                    self.interfaz_ia.generar_texto("Narra la muerte del protagonista.")
+                )
+                # Registrar y persistir la muerte
+                self.gestion_historia.registrar_accion(decision, outro)
+                self.persistir_estado()
+                return {'tipo': 'muerte', 'texto': outro}
 
         # --- FLUJO NARRATIVO / OBJETO / FINAL ---
         siguiente = self.determinar_tipo_evento()
         evento = self.iniciar_evento(siguiente)
 
-        # registramos la acción del jugador y la respuesta de la IA
-        respuesta_texto = evento.get('texto') or evento.get('intro') or evento.get('outro') or ""
+        # Aquí debes registrar el texto que la IA ha generado para este evento
+        # (sea narrativa, objeto o final) y luego persistir el estado.
+        respuesta_texto = (
+                evento.get('texto') or
+                evento.get('intro') or
+                evento.get('outro') or
+                ""
+        )
         self.gestion_historia.registrar_accion(decision, respuesta_texto)
-        self._persistir_estado()
+        self.persistir_estado()
 
         return evento
 
-    def _persistir_estado(self):
+    def persistir_estado(self):
         # obtenemos el resumen acumulado
         self.historia = self.gestion_historia.devolver_historia()
         datos = {

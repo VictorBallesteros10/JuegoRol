@@ -1,5 +1,3 @@
-# app/service/Gestion_historia.py
-
 import requests
 from app.utilities.Textos import instrucciones
 

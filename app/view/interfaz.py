@@ -15,13 +15,12 @@ class IUPrincipalJuego(QWidget):
         self.maestro_juego = maestro_juego
         self.setWindowTitle("IAm the master")
         self.setGeometry(100, 100, 800, 600)
-        self.inicializar_interfaz()
+        self._init_ui()
 
         texto_inicial = self.maestro_juego.obtener_descripcion_entorno()
         self.iniciar_escritura(texto_inicial)
 
-    def inicializar_interfaz(self):
-
+    def _init_ui(self):
         self.barra_herramientas = QToolBar()
         accion_ver_estadisticas = QAction("Ver estadísticas", self)
         accion_ver_estadisticas.triggered.connect(self.ver_estadisticas)
@@ -43,7 +42,6 @@ class IUPrincipalJuego(QWidget):
         self.campo_entrada = QLineEdit()
         self.campo_entrada.setPlaceholderText("Describe tu acción...")
         self.campo_entrada.returnPressed.connect(self.procesar_accion)
-
         self.boton_enviar = QPushButton("Enviar")
         self.boton_enviar.clicked.connect(self.procesar_accion)
 
@@ -57,7 +55,6 @@ class IUPrincipalJuego(QWidget):
         diseño_entrada = QHBoxLayout()
         diseño_entrada.addWidget(self.campo_entrada)
         diseño_entrada.addWidget(self.boton_enviar)
-
         diseño_principal = QVBoxLayout(self)
         diseño_principal.addWidget(self.barra_herramientas)
         diseño_principal.addWidget(self.etiqueta_escenario)
@@ -65,7 +62,7 @@ class IUPrincipalJuego(QWidget):
         diseño_principal.addLayout(diseño_entrada)
 
         self.temporizador_escritura = QTimer(self)
-        self.temporizador_escritura.setInterval(3) # Intervalo en milisegundos para escribir un carácter
+        self.temporizador_escritura.setInterval(3)
         self.temporizador_escritura.timeout.connect(self.escribir_caracter)
         self.texto_pendiente = ""
 
@@ -78,54 +75,64 @@ class IUPrincipalJuego(QWidget):
             self.anexar_linea("jugador", f"{clave}: {valor}")
 
     def guardar_partida(self):
-        self.maestro_juego._persistir_estado()
+        self.maestro_juego.persistir_estado()
         self.anexar_linea("jugador", "Partida guardada correctamente.")
 
     def procesar_accion(self):
         accion = self.campo_entrada.text().strip()
         if not accion:
             return
+
         self.anexar_linea("jugador", accion)
         self.campo_entrada.clear()
+
         resultado = self.maestro_juego.procesar_decision_jugador(accion)
-        texto_respuesta = self._obtener_texto(resultado)
+        texto_respuesta = self.obtener_texto(resultado)
         if texto_respuesta:
             self.iniciar_escritura(texto_respuesta)
 
-        mc = self.maestro_juego.mecanica_combate
-        if mc and not mc.es_turno_jugador and resultado['tipo'] == 'continuar':
-            # Ejecutamos el turno del enemigo automáticamente
-            resultado_enemigo = mc.ejecutar_turno_enemigo()
-            # Mostramos su log con anexar_linea (o efecto de escritura si prefieres):
-            for linea in resultado_enemigo['log']:
-                self.anexar_linea("narrador", linea)
+        if resultado.get('tipo') == 'combate_enemigo':
+            mc = self.maestro_juego.mecanica_combate
+            turno_enemigo = mc.ejecutar_turno_enemigo()
+            bloque = "\n".join(turno_enemigo['log'])
+            if mc.es_turno_jugador:
+                bloque += "\nAhora es tu turno: escribe tu acción."
+            self.iniciar_escritura(bloque)
 
-    def _obtener_texto(self, resultado: dict) -> str:
+    def obtener_texto(self, resultado: dict) -> str:
         tipo = resultado.get('tipo', '')
+
         if tipo == 'narrativa':
             self.restaurar_escenario()
             return resultado['texto']
         if tipo == 'objeto':
             self.restaurar_escenario()
             return f"{resultado['texto']}\nBonus: {resultado['bonus']}"
-        if tipo in ('combate_inicio', 'combate_final_inicio'):
-            self.mostrar_arte_combate()
-            log = "\n".join(resultado['init_log'])
-            return f"{resultado['intro']}\n{log}\nDecide: pelear o huir"
-        if tipo == 'combate_jugador':
-            return "\n".join(resultado['log']) + "\nTurno del enemigo..."
-        if tipo == 'muerte':
-            self.mostrar_muerte(resultado['texto'])
-            return resultado['texto']
-        if tipo == 'combate_enemigo':
-            return "\n".join(resultado['log']) + "\nDecide: pelear o huir"
-        if tipo in ('combate_huido', 'combate_victoria', 'combate_derrota'):
-            if tipo != 'combate_jugador':
-                self.mostrar_arte_combate()
+
+        if tipo in ('combate_jugador', 'combate_enemigo'):
+            if 'intro' in resultado:
+                self.mostrar_orco()
+                self.anexar_linea("narrador", resultado['intro'])
+            for linea in resultado['log']:
+                self.anexar_linea("narrador", linea)
+            if tipo == 'combate_jugador':
+                return "\nAhora es tu turno: escribe tu acción."
+            return ""
+
+        if tipo == 'combate_victoria':
+            self.restaurar_escenario()
             return "\n".join(resultado['log']) + "\n" + resultado.get('outro', '')
+        if tipo == 'combate_huido':
+            self.restaurar_escenario()
+            return "\n".join(resultado['log']) + "\n" + resultado.get('outro', '')
+        if tipo == 'muerte':
+            self.mostrar_muerte(resultado.get('texto', ''))
+            return resultado.get('texto', '')
+
         if tipo == 'final':
             self.restaurar_escenario()
             return resultado['texto']
+
         return ""
 
     def anexar_linea(self, emisor: str, texto: str):
@@ -159,13 +166,26 @@ class IUPrincipalJuego(QWidget):
 
     def restaurar_escenario(self):
         carpeta = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'archivos'))
-        self._cambiar_medios(os.path.join(carpeta, 'bosque.jpg'), os.path.join(carpeta, 'musica_ambiente2.mp3'))
+        self.cambiar_medios(
+            os.path.join(carpeta, 'bosque.jpg'),
+            os.path.join(carpeta, 'musica_ambiente2.mp3')
+        )
+
+    def mostrar_orco(self):
+        carpeta = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'archivos'))
+        self.cambiar_medios(
+            os.path.join(carpeta, 'orco.jpg'),
+            os.path.join(carpeta, 'musica_ambiente.mp3')
+        )
 
     def mostrar_arte_combate(self):
         carpeta = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'archivos'))
-        self._cambiar_medios(os.path.join(carpeta, 'rocadragon.png'), os.path.join(carpeta, 'musica_ambiente.mp3'))
+        self.cambiar_medios(
+            os.path.join(carpeta, 'rocadragon.png'),
+            os.path.join(carpeta, 'musica_ambiente.mp3')
+        )
 
-    def _cambiar_medios(self, ruta_imagen: str, ruta_musica: str):
+    def cambiar_medios(self, ruta_imagen: str, ruta_musica: str):
         imagen = QPixmap(ruta_imagen).scaledToWidth(600)
         self.etiqueta_escenario.setPixmap(imagen)
         self.reproductor_audio.setSource(QUrl.fromLocalFile(ruta_musica))
