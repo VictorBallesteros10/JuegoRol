@@ -23,6 +23,7 @@ def encontrar_ruta_lm_studio():
                         continue
     except Exception as error:
         print("Error al buscar en el registro:", error)
+
     return None
 
 
