@@ -23,7 +23,7 @@ class MaestroDeJuegoIA:
         self.historia            = historia
 
     def formatear_narracion(self, texto: str) -> str:
-        return f"Narrador: {texto}"
+        return f"{texto}"
 
     def obtener_descripcion_entorno(self) -> str:
         if self.historia: # Si ya hay una historia, la devolvemos
