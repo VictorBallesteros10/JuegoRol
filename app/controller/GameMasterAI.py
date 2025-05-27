@@ -178,7 +178,7 @@ class MaestroDeJuegoIA:
                 )
                 self.gestion_historia.registrar_accion('turno_enemigo', outro)
                 self._persistir_estado()
-                return {'tipo':'combate_derrota','log':resultado['log'],'outro':outro}
+                return {'tipo':'muerte','log':resultado['log'],'outro':outro}
 
         # --- FLUJO NARRATIVO / OBJETO / FINAL ---
         siguiente = self.determinar_tipo_evento()

@@ -1,4 +1,3 @@
-# app/service/AccionesCombate.py
 
 import random
 
@@ -59,7 +58,7 @@ class MecanicaCombate:
 
         # Si el jugador ya está muerto, termina inmediatamente
         if self.jugador.vida <= 0:
-            return {'tipo': 'derrota', 'log': ["El jugador no tiene vida y cae derrotado."]}
+            return {'tipo': 'derrota', 'log': ["El enemigo no tiene vida y cae derrotado."]}
 
         # Si la vida del enemigo es baja, intenta huir
         if self.enemigo.vida <= 3:
