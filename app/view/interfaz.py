@@ -1,3 +1,4 @@
+import functools
 import os
 from PyQt6.QtWidgets import (
     QWidget, QTextBrowser, QLineEdit, QPushButton,
@@ -8,6 +9,7 @@ from PyQt6.QtGui import QPixmap, QTextCursor, QAction
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtCore import QUrl, QTimer
 from app.controller.GameMasterAI import MaestroDeJuegoIA
+
 
 
 class IUPrincipalJuego(QWidget):
@@ -45,23 +47,25 @@ class IUPrincipalJuego(QWidget):
         accion_pitch_down.triggered.connect(self.pitch_down)
 
         # Volumen audio
-        accion_vol_audio_up = QAction("Vol. Audio +", self)
+        accion_vol_audio_up = QAction("Vol música +", self)
         accion_vol_audio_up.triggered.connect(self.vol_audio_up)
-        accion_vol_audio_down = QAction("Vol. Audio -", self)
+        accion_vol_audio_down = QAction("Vol música -", self)
         accion_vol_audio_down.triggered.connect(self.vol_audio_down)
 
         # Volumen TTS
-        accion_vol_tts_up = QAction("Vol. TTS +", self)
+        accion_vol_tts_up = QAction("Vol voz +", self)
         accion_vol_tts_up.triggered.connect(self.vol_tts_up)
-        accion_vol_tts_down = QAction("Vol. TTS -", self)
+        accion_vol_tts_down = QAction("Vol voz -", self)
         accion_vol_tts_down.triggered.connect(self.vol_tts_down)
 
         # Añadir acciones
-        for accion in [accion_ver_estadisticas, accion_guardar_partida,
-                       accion_configurar_velocidad, accion_configurar_voz,
-                       accion_pitch_up, accion_pitch_down,
-                       accion_vol_audio_up, accion_vol_audio_down,
-                       accion_vol_tts_up, accion_vol_tts_down]:
+        for accion in [
+            accion_ver_estadisticas, accion_guardar_partida,
+            accion_configurar_velocidad, accion_configurar_voz,
+            accion_pitch_up, accion_pitch_down,
+            accion_vol_audio_up, accion_vol_audio_down,
+            accion_vol_tts_up, accion_vol_tts_down
+        ]:
             self.barra_herramientas.addAction(accion)
         self.barra_herramientas.addSeparator()
 
@@ -199,7 +203,10 @@ class IUPrincipalJuego(QWidget):
         color = "#00FFFF" if emisor == "jugador" else "#ffffff"
         estilo = "italic" if emisor == "jugador" else "normal"
         etiqueta = "Jugador" if emisor == "jugador" else "Narrador"
-        estilo_etiqueta = f'<p><b style="color:{color}; font-style:{estilo};">{etiqueta}:</b> {texto}</p>'
+        estilo_etiqueta = (
+            f'<p><b style="color:{color}; font-style:{estilo};">'
+            f'{etiqueta}:</b> {texto}</p>'
+        )
         self.area_dialogo.append(estilo_etiqueta)
         self.desplazar_auto()
         if emisor != "jugador" and not self.is_reading:
@@ -229,21 +236,27 @@ class IUPrincipalJuego(QWidget):
         barra.setValue(barra.maximum())
 
     def restaurar_escenario(self):
-        carpeta = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'archivos'))
+        carpeta = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'archivos')
+        )
         self.cambiar_medios(
             os.path.join(carpeta, 'bosque.jpg'),
             os.path.join(carpeta, 'musica_ambiente2.mp3')
         )
 
     def mostrar_orco(self):
-        carpeta = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'archivos'))
+        carpeta = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'archivos')
+        )
         self.cambiar_medios(
             os.path.join(carpeta, 'orco.png'),
             os.path.join(carpeta, 'musica_ambiente.mp3')
         )
 
     def mostrar_arte_combate(self):
-        carpeta = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'archivos'))
+        carpeta = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '..', 'archivos')
+        )
         self.cambiar_medios(
             os.path.join(carpeta, 'rocadragon.png'),
             os.path.join(carpeta, 'musica_ambiente.mp3')
@@ -261,42 +274,52 @@ class IUPrincipalJuego(QWidget):
         self.boton_enviar.setDisabled(True)
         self.anexar_linea("narrador", mensaje_final)
 
-    # Configuración dinámica
     def configurar_velocidad(self):
         valor, ok = QInputDialog.getInt(
-            self, "Configurar velocidad", "Intervalo en milisegundos (menos = más rápido):",
-            value=self.velocidad_escritura, min=1, max=100)
+            self, "Configurar velocidad",
+            "Intervalo en milisegundos (menos = más rápido):",
+            value=self.velocidad_escritura, min=1, max=100
+        )
         if ok:
             self.velocidad_escritura = valor
             self.temporizador_escritura.setInterval(valor)
-            self.anexar_linea("jugador", f"Velocidad de escritura ajustada a {valor} ms por carácter.")
+            self.area_dialogo.append(
+                f'<p><b>Configuración:</b> Velocidad de escritura ajustada a {valor} ms por carácter.</p>'
+            )
+            self.desplazar_auto()
 
     def configurar_voz(self):
         if not self.voices:
-            self.anexar_linea("jugador", "No hay voces disponibles.")
+            self.area_dialogo.append('<p><b>Configuración:</b> No hay voces disponibles.</p>')
+            self.desplazar_auto()
             return
-        opciones = [f"Voz {i+1} - {voz.name()}" for i,voz in enumerate(self.voices)]
+        opciones = [f"Voz {i + 1} - {voz.name()}" for i, voz in enumerate(self.voices)]
         selec, ok = QInputDialog.getItem(
-            self, "Seleccionar voz", "Elige una voz:", opciones, current=0, editable=False)
+            self, "Seleccionar voz", "Elige una voz:",
+            opciones, current=0, editable=False
+        )
         if ok:
             idx = opciones.index(selec)
             self.voice_index = idx
             self.stt.setVoice(self.voices[idx])
-            self.anexar_linea("jugador", f"Voz del narrador cambiada a: {selec}")
+            self.area_dialogo.append(f'<p><b>Configuración:</b> Voz cambiada a {selec}.</p>')
+            self.desplazar_auto()
             if not self.is_reading:
                 self.stt.say("¡HOLA VIAJERO!")
 
     def pitch_up(self):
         nuevo = min(2.0, self.stt.pitch() + 0.1)
         self.stt.setPitch(nuevo)
-        self.anexar_linea("jugador", f"tono ajustado a {nuevo:.1f}")
+        self.area_dialogo.append(f'<p><b>Configuración:</b> Tono ajustado a {nuevo:.1f}.</p>')
+        self.desplazar_auto()
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
 
     def pitch_down(self):
         nuevo = max(-2.0, self.stt.pitch() - 0.1)
         self.stt.setPitch(nuevo)
-        self.anexar_linea("jugador", f"tono ajustado a {nuevo:.1f}")
+        self.area_dialogo.append(f'<p><b>Configuración:</b> Tono ajustado a {nuevo:.1f}.</p>')
+        self.desplazar_auto()
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
 
@@ -304,19 +327,28 @@ class IUPrincipalJuego(QWidget):
         actual = self.control_audio.volume()
         nuevo = min(1.0, actual + 0.1)
         self.control_audio.setVolume(nuevo)
-        self.anexar_linea("jugador", f"Volumen de audio ajustado a {nuevo*100:.0f}%")
+        self.area_dialogo.append(
+            f'<p><b>Configuración:</b> Volumen de audio ajustado a {nuevo * 100:.0f}%.</p>'
+        )
+        self.desplazar_auto()
 
     def vol_audio_down(self):
         actual = self.control_audio.volume()
         nuevo = max(0.0, actual - 0.1)
         self.control_audio.setVolume(nuevo)
-        self.anexar_linea("jugador", f"Volumen de audio ajustado a {nuevo*100:.0f}%")
+        self.area_dialogo.append(
+            f'<p><b>Configuración:</b> Volumen de audio ajustado a {nuevo * 100:.0f}%.</p>'
+        )
+        self.desplazar_auto()
 
     def vol_tts_up(self):
         actual = self.stt.volume()
         nuevo = min(1.0, actual + 0.1)
         self.stt.setVolume(nuevo)
-        self.anexar_linea("jugador", f"Volumen de narrador ajustado a {nuevo*100:.0f}%")
+        self.area_dialogo.append(
+            f'<p><b>Configuración:</b> Volumen de narrador ajustado a {nuevo * 100:.0f}%.</p>'
+        )
+        self.desplazar_auto()
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
 
@@ -324,6 +356,9 @@ class IUPrincipalJuego(QWidget):
         actual = self.stt.volume()
         nuevo = max(0.0, actual - 0.1)
         self.stt.setVolume(nuevo)
-        self.anexar_linea("jugador", f"Volumen de narrador ajustado a {nuevo*100:.0f}%")
+        self.area_dialogo.append(
+            f'<p><b>Configuración:</b> Volumen de narrador ajustado a {nuevo * 100:.0f}%.</p>'
+        )
+        self.desplazar_auto()
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
