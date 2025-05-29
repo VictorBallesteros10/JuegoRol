@@ -74,3 +74,24 @@ class AdministradorBaseDatosSA:
             self.sesion.add(partida)
 
         self.sesion.commit()
+
+    def eliminar_partida(self, partida_id: int) -> bool:
+        partida = self.sesion.get(Partida, partida_id)
+        if partida:
+            self.sesion.delete(partida)
+            self.sesion.commit()
+            return True
+        return False
+
+    def eliminar_partida_muerte(self, usuario_id: int, nombre_personaje: str) -> bool:
+        partida = (
+            self.sesion
+            .query(Partida)
+            .filter_by(usuario_id=usuario_id, nombre_personaje=nombre_personaje)
+            .first()
+        )
+        if partida:
+            self.sesion.delete(partida)
+            self.sesion.commit()
+            return True
+        return False

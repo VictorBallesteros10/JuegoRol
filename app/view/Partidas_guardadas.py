@@ -14,14 +14,15 @@ class DialogoPartidasGuardadas(QDialog):
 
         etiqueta = QLabel("Selecciona una partida:")
         self.lista_partidas = QListWidget()
-        partidas = self.administrador_bd.listar_partidas_guardadas(id_usuario)
-        for pid, nombre, fecha in partidas:
-            self.lista_partidas.addItem(f"{pid} | {nombre} ({fecha})")
+        self.cargar_lista_partidas()
 
-        boton_cargar = QPushButton("Cargar")
-        boton_nueva  = QPushButton("Nueva")
+        # Botones
+        boton_cargar   = QPushButton("Cargar")
+        boton_nueva    = QPushButton("Nueva")
+        boton_eliminar = QPushButton("Eliminar")
         boton_cancelar = QPushButton("Cancelar")
 
+        # Layouts
         layout = QVBoxLayout()
         layout.addWidget(etiqueta)
         layout.addWidget(self.lista_partidas)
@@ -29,16 +30,25 @@ class DialogoPartidasGuardadas(QDialog):
         botones = QHBoxLayout()
         botones.addWidget(boton_cargar)
         botones.addWidget(boton_nueva)
+        botones.addWidget(boton_eliminar)
         botones.addWidget(boton_cancelar)
         layout.addLayout(botones)
 
         self.setLayout(layout)
 
-        boton_cargar.clicked.connect(self._cargar_partida)
-        boton_nueva.clicked.connect(self._crear_partida)
+        # Conexiones
+        boton_cargar.clicked.connect(self.cargar_partida_en_pantalla)
+        boton_nueva.clicked.connect(self.crear_partida)
+        boton_eliminar.clicked.connect(self.eliminar_partida_seleccionada)
         boton_cancelar.clicked.connect(self.reject)
 
-    def _cargar_partida(self):
+    def cargar_lista_partidas(self):
+        self.lista_partidas.clear()
+        partidas = self.administrador_bd.listar_partidas_guardadas(self.id_usuario)
+        for pid, nombre, fecha in partidas:
+            self.lista_partidas.addItem(f"{pid} | {nombre} ({fecha})")
+
+    def cargar_partida_en_pantalla(self):
         item = self.lista_partidas.currentItem()
         if not item:
             QMessageBox.warning(self, "Error", "Debes seleccionar una partida.")
@@ -46,6 +56,27 @@ class DialogoPartidasGuardadas(QDialog):
         self.id_partida = int(item.text().split(" | ")[0])
         self.accept()
 
-    def _crear_partida(self):
+    def crear_partida(self):
         self.id_partida = None
         self.accept()
+
+    def eliminar_partida_seleccionada(self):
+        item = self.lista_partidas.currentItem()
+        if not item:
+            QMessageBox.warning(self, "Error", "Debes seleccionar una partida para eliminar.")
+            return
+
+        respuesta = QMessageBox.question(
+            self, "Confirmar eliminación",
+            "¿Estás seguro de que deseas eliminar esta partida?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if respuesta == QMessageBox.StandardButton.Yes:
+            id_partida = int(item.text().split(" | ")[0])
+            exito = self.administrador_bd.eliminar_partida(id_partida)
+            if exito:
+                QMessageBox.information(self, "Eliminada", "Partida eliminada correctamente.")
+                self.cargar_lista_partidas()
+            else:
+                QMessageBox.critical(self, "Error", "No se pudo eliminar la partida.")

@@ -205,7 +205,7 @@ class MaestroDeJuegoIA:
                 )
                 # Registrar y persistir la muerte
                 self.gestion_historia.registrar_accion(decision, outro)
-                self.persistir_estado()
+                self.eliminar_partida()
                 return {'tipo': 'muerte', 'texto': outro}
 
         # --- FLUJO NARRATIVO / OBJETO / FINAL ---
@@ -245,3 +245,5 @@ class MaestroDeJuegoIA:
             datos,
             self.historia
         )
+    def eliminar_partida(self):
+        self.dao_partidas.eliminar_partida_muerte(self.id_usuario,self.jugador.nombre)
