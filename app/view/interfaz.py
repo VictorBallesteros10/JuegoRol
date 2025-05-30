@@ -81,8 +81,8 @@ class IUPrincipalJuego(QWidget):
             }
             /* Aplica a cada párrafo <p> dentro del QTextBrowser */
             QTextBrowser p {
-                margin: 2px 0;    /* espacio superior e inferior muy pequeño */
-                line-height: 110%; /* interlínea reducida al 110% */
+                margin: 1px 0;    /* espacio superior e inferior muy pequeño */
+                line-height: 70%; /* interlínea reducida al 110% */
             }
         """)
 
@@ -293,13 +293,13 @@ class IUPrincipalJuego(QWidget):
                 f'<p><b>Configuración:</b> Velocidad de escritura ajustada a {valor} ms por carácter.</p>'
             )
             self.desplazar_auto()
-            QTimer.singleShot(5000, self.area_dialogo.undo)
+            QTimer.singleShot(3000, self.area_dialogo.undo)
 
     def configurar_voz(self):
         if not self.voices:
             self.area_dialogo.append('<p><b>Configuración:</b> No hay voces disponibles.</p>')
             self.desplazar_auto()
-            QTimer.singleShot(5000, self.area_dialogo.undo)
+            QTimer.singleShot(3000, self.area_dialogo.undo)
             return
 
         opciones = [f"Voz {i + 1} - {voz.name()}" for i, voz in enumerate(self.voices)]
@@ -313,7 +313,7 @@ class IUPrincipalJuego(QWidget):
             self.stt.setVoice(self.voices[idx])
             self.area_dialogo.append(f'<p><b>Configuración:</b> Voz cambiada a {selec}.</p>')
             self.desplazar_auto()
-            QTimer.singleShot(5000, self.area_dialogo.undo)
+            QTimer.singleShot(3000, self.area_dialogo.undo)
             if not self.is_reading:
                 self.stt.say("¡HOLA VIAJERO!")
 
@@ -322,7 +322,7 @@ class IUPrincipalJuego(QWidget):
         self.stt.setPitch(nuevo)
         self.area_dialogo.append(f'<p><b>Configuración:</b> Tono ajustado a {nuevo:.1f}.</p>')
         self.desplazar_auto()
-        QTimer.singleShot(5000, self.area_dialogo.undo)
+        QTimer.singleShot(3000, self.area_dialogo.undo)
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
 
@@ -331,7 +331,7 @@ class IUPrincipalJuego(QWidget):
         self.stt.setPitch(nuevo)
         self.area_dialogo.append(f'<p><b>Configuración:</b> Tono ajustado a {nuevo:.1f}.</p>')
         self.desplazar_auto()
-        QTimer.singleShot(5000, self.area_dialogio.undo)
+        QTimer.singleShot(3000, self.area_dialogio.undo)
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
 
@@ -343,7 +343,7 @@ class IUPrincipalJuego(QWidget):
             f'<p><b>Configuración:</b> Volumen de audio ajustado a {nuevo * 100:.0f}%.</p>'
         )
         self.desplazar_auto()
-        QTimer.singleShot(5000, self.area_dialogo.undo)
+        QTimer.singleShot(3000, self.area_dialogo.undo)
 
     def vol_audio_down(self):
         actual = self.control_audio.volume()
@@ -353,7 +353,7 @@ class IUPrincipalJuego(QWidget):
             f'<p><b>Configuración:</b> Volumen de audio ajustado a {nuevo * 100:.0f}%.</p>'
         )
         self.desplazar_auto()
-        QTimer.singleShot(5000, self.area_dialogo.undo)
+        QTimer.singleShot(3000, self.area_dialogo.undo)
 
     def vol_tts_up(self):
         actual = self.stt.volume()
@@ -363,7 +363,7 @@ class IUPrincipalJuego(QWidget):
             f'<p><b>Configuración:</b> Volumen de narrador ajustado a {nuevo * 100:.0f}%.</p>'
         )
         self.desplazar_auto()
-        QTimer.singleShot(5000, self.area_dialogo.undo)
+        QTimer.singleShot(3000, self.area_dialogo.undo)
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
 
@@ -375,6 +375,6 @@ class IUPrincipalJuego(QWidget):
             f'<p><b>Configuración:</b> Volumen de narrador ajustado a {nuevo * 100:.0f}%.</p>'
         )
         self.desplazar_auto()
-        QTimer.singleShot(5000, self.area_dialogo.undo)
+        QTimer.singleShot(3000, self.area_dialogo.undo)
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")

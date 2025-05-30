@@ -31,6 +31,8 @@ def iniciar_juego(self=None):
         historia = datos.get("historia", "")
 
         datos_personaje = datos.get("personaje", {})
+        datos_personaje.pop("universo", None)
+
         jugador = Jugador(**datos_personaje)
         if jugador.vida <= 0 :
             QMessageBox.warning(self, "Error", "Tu personaje murio y será eliminado, escoja o cree otro.")
@@ -49,8 +51,6 @@ def iniciar_juego(self=None):
 
     interfaz_ia = IA()
     interfaz_ia.cargar_modelo()
-    print(historia)
-    print(jugador.nombre)
     maestro     = MaestroDeJuegoIA(interfaz_ia, jugador, universo, id_usuario,historia)
 
     ventana = IUPrincipalJuego(maestro)

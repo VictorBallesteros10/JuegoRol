@@ -30,6 +30,7 @@ class MaestroDeJuegoIA:
             return self.historia
         msgs = list(instrucciones)
 
+
         # Añade un sistema con la descripción del entorno
         contenido_entorno = (
             f"En el universo de {self.universo}, describe en un solo "
@@ -244,5 +245,6 @@ class MaestroDeJuegoIA:
             datos,
             self.historia
         )
+
     def eliminar_partida(self):
         self.dao_partidas.eliminar_partida_muerte(self.id_usuario,self.jugador.nombre)
