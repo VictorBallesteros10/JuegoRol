@@ -37,7 +37,7 @@ class IA:
         try:
            # directorio_lm_studio = r"C:\Users\jotxilla\AppData\Local\Programs\LM Studio"
             directorio_lm_studio = encontrar_ruta_lm_studio()
-            print(f"{directorio_lm_studio} rtuta")
+            print(f"{directorio_lm_studio} ruta")
             # Desactivar el modelo actual
             self.hermes_process = subprocess.Popen(
                 ['lms', 'unload', 'hermes-3-llama-3.2-3b'],

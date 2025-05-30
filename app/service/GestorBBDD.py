@@ -1,5 +1,3 @@
-# app/service/DatabaseManagerSA.py
-
 import json
 from sqlalchemy.exc import IntegrityError
 from app.model.Usuario import Session, Usuario, Partida
@@ -17,15 +15,22 @@ class AdministradorBaseDatosSA:
         )
         return usuario.id if usuario else None
 
+
     def crear_usuario(self, username: str, password: str) -> int:
-        nuevo = Usuario(username=username, password=password)
+        # Creamos la entidad mapeando campos correctamente
+        nuevo = Usuario(nombre=username, clave=password)
         self.sesion.add(nuevo)
         try:
             self.sesion.commit()
+            # Tras el commit, 'nuevo.id' ya está asignado
+            nuevo_id = nuevo.id
         except IntegrityError:
             self.sesion.rollback()
             raise
-        return nuevo.id
+        finally:
+            # Cerramos la sesión una vez hemos extraído el id
+            self.sesion.close()
+        return nuevo_id
 
     def listar_partidas_guardadas(self, usuario_id: int) -> list[tuple[int,str,str]]:
         partidas = (
