@@ -17,18 +17,15 @@ class AdministradorBaseDatosSA:
 
 
     def crear_usuario(self, username: str, password: str) -> int:
-        # Creamos la entidad mapeando campos correctamente
         nuevo = Usuario(nombre=username, clave=password)
         self.sesion.add(nuevo)
         try:
             self.sesion.commit()
-            # Tras el commit, 'nuevo.id' ya está asignado
             nuevo_id = nuevo.id
         except IntegrityError:
             self.sesion.rollback()
             raise
         finally:
-            # Cerramos la sesión una vez hemos extraído el id
             self.sesion.close()
         return nuevo_id
 

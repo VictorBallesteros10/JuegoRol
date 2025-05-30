@@ -6,7 +6,6 @@ from app.service.GestorBBDD import AdministradorBaseDatosSA
 from app.service.Gestion_historia import GestionHistoria
 from app.utilities.Textos import instrucciones
 
-
 class MaestroDeJuegoIA:
     def __init__(self, interfaz_ia, jugador, universo: str, id_usuario: int, historia: str = ""):
         self.interfaz_ia         = interfaz_ia
@@ -64,11 +63,11 @@ class MaestroDeJuegoIA:
         self.contador_decisiones += 1
         siguiente = self.contador_decisiones
         print(siguiente)
-        if siguiente <= 1:
+        if siguiente <= 3:
             return "narrativa"
         if siguiente == 4:
             return "objeto"
-        if siguiente == 2:
+        if siguiente == 5:
             return "combate"
         if 6 <= siguiente <= 7:
             return "narrativa"
@@ -78,8 +77,9 @@ class MaestroDeJuegoIA:
 
     def iniciar_evento(self, tipo_evento: str) -> dict:
         if tipo_evento == "narrativa":
+            print(f"estoy en narrativa {self.mision_principal} y {self.gestion_historia.devolver_historia()}")
             prompt = (
-                f"Continúa la historia de {self.jugador.nombre} en {self.universo}, "
+                f"Continúa la historia de {self.jugador.nombre} en {self.universo}, teniendo muy en cuenta la decision tomada en la respuesta del jugador "
                 f"centrada en {self.mision_principal}. "
                 "Escribe un solo fragmento de prosa, coherente y sin enumerar, "
                 "con sugerencias sutiles de acción."
@@ -90,7 +90,7 @@ class MaestroDeJuegoIA:
         if tipo_evento == "objeto":
             prompt = (
                 f"Describe en un solo fragmento de prosa cómo {self.jugador.nombre} "
-                "encuentra un objeto clave para la misión. Sin enumerar, solo el hallazgo."
+                f"encuentra un objeto clave para la misión. Sin enumerar, solo el hallazgo con el contexto de {self.gestion_historia.devolver_historia()}"
             )
             desc = self.interfaz_ia.generar_texto(prompt)
             narr = self.formatear_narracion(desc)
@@ -115,7 +115,7 @@ class MaestroDeJuegoIA:
             # Narración de aparición
             prompt_intro = (
                 "Relata en un solo fragmento de prosa la irrupción épica de "
-                f"{self.enemigo_actual.nombre} ante el héroe."
+                f"{self.enemigo_actual.nombre} ante el héroe con el contexto de {self.gestion_historia.devolver_historia()}."
             )
             intro = self.formatear_narracion(
                 self.interfaz_ia.generar_texto(prompt_intro)
@@ -126,7 +126,6 @@ class MaestroDeJuegoIA:
                 self.jugador, self.enemigo_actual
             )
             init_log = self.mecanica_combate.iniciar_mecanica_combate()
-            # Ya sabemos quién empieza:
             primer_turno = "combate_jugador" if self.mecanica_combate.es_turno_jugador else "combate_enemigo"
 
             self.combate_activo = True
@@ -138,7 +137,7 @@ class MaestroDeJuegoIA:
 
         if tipo_evento == "final":
             prompt_final = (
-                f"Escribe un epílogo evocador para la aventura de {self.jugador.nombre} "
+                f"Escribe un epílogo evocador para la aventura de {self.jugador.nombre} en el contexto actual de {self.gestion_historia.devolver_historia()} "
                 "en un solo fragmento de prosa, coherente y sin enumerar."
             )
             cierre = self.interfaz_ia.generar_texto(prompt_final)

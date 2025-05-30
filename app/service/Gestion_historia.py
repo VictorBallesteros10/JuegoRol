@@ -1,7 +1,6 @@
 import requests
 from app.utilities.Textos import instrucciones
 
-
 class GestionHistoria:
     def __init__(self, lmstudio_url: str):
         self.lmstudio_url = lmstudio_url

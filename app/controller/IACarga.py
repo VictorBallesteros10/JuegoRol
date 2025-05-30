@@ -4,7 +4,6 @@ from app.service.Gestion_historia import GestionHistoria
 from app.utilities.Textos import instrucciones
 import winreg
 
-
 def encontrar_ruta_lm_studio():
     try:
         clave_registro = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
