@@ -47,7 +47,7 @@ class GestionHistoria:
         try:
             resp = requests.post(
                 self.lmstudio_url,
-                json={'messages': resumen_prompt, 'max_tokens': 500, 'temperature': 0.2}
+                json={'messages': resumen_prompt, 'max_tokens': 800, 'temperature': 0.2}
             )
             data = resp.json()
             if data.get('choices'):
@@ -66,7 +66,7 @@ class GestionHistoria:
         try:
             resp = requests.post(
                 self.lmstudio_url,
-                json={'messages': resumen_prompt, 'max_tokens': 500, 'temperature': 0.2}
+                json={'messages': resumen_prompt, 'max_tokens': 800, 'temperature': 0.2}
             )
             data = resp.json()
             if data.get('choices'):

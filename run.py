@@ -15,5 +15,4 @@ if __name__ == "__main__":
     iniciar_juego()
 #De momento no es necesario lanzar un servidor por que no se van a querer hacer peticiones
 #no lee lo primero de las batallas. y parece que lo que pone narrador de las batallas tampoco se manda por el mismo lado
-#eliminar jugadores muertos de la base de datos
 #añadir iteación a la persistencia del personaje

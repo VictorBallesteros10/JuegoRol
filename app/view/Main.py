@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QDialog
+from PyQt6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from app.controller.IACarga import IA
 from app.controller.GameMasterAI import MaestroDeJuegoIA
@@ -10,7 +10,7 @@ from app.view.Creador_visual import DialogoCreacionPersonaje
 from app.view.interfaz import IUPrincipalJuego
 from app.service.GestorBBDD import AdministradorBaseDatosSA
 
-def iniciar_juego():
+def iniciar_juego(self=None):
     app = QApplication(sys.argv)
 
     dialogo_login = DialogoInicioSesion()
@@ -32,6 +32,10 @@ def iniciar_juego():
 
         datos_personaje = datos.get("personaje", {})
         jugador = Jugador(**datos_personaje)
+        if jugador.vida <= 0 :
+            QMessageBox.warning(self, "Error", "Tu personaje murio y será eliminado, escoja o cree otro.")
+            administrador_bd.eliminar_partida(id_partida)
+            iniciar_juego()
 
     else:
         dialogo_crear = DialogoCreacionPersonaje(None)
