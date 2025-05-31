@@ -71,21 +71,18 @@ class IUPrincipalJuego(QWidget):
         self.area_dialogo = QTextBrowser()
         self.area_dialogo.setReadOnly(True)
         self.area_dialogo.setUndoRedoEnabled(True)
-        fuente = QFont("Consolas", 12)
+        fuente = QFont("Consolas", 16, weight=QFont.Weight.Bold)
         self.area_dialogo.setFont(fuente)
         self.area_dialogo.setStyleSheet("""
             QTextBrowser {
                 background-color: #000000;
                 color: #ffffff;
-                padding: 8px;
+                padding: 1px;
             }
-            /* Aplica a cada párrafo <p> dentro del QTextBrowser */
             QTextBrowser p {
-                margin: 1px 0;    /* espacio superior e inferior muy pequeño */
-                line-height: 70%; /* interlínea reducida al 110% */
-            }
+                margin: 1px 0;    
+                line-height: 70%;
         """)
-
         # Entrada y botón
         self.campo_entrada = QLineEdit()
         self.campo_entrada.setPlaceholderText("Describe tu acción...")
@@ -220,7 +217,7 @@ class IUPrincipalJuego(QWidget):
 
     def iniciar_escritura(self, texto: str):
         self.texto_pendiente = texto
-        self.area_dialogo.append('<p><b style="color:#ffffff;">Narrador:</b> ')
+        self.area_dialogo.append('<p><b style="color:grey;">Narrador:</b> ')
         self.area_dialogo.moveCursor(QTextCursor.MoveOperation.End)
         if not self.is_reading:
             self.stt.say(texto)
