@@ -13,7 +13,7 @@ class GestionHistoria:
             'player': jugador_input,
             'gm': ia_response
         })
-        # Cada N turnos, regeneramos el resumen
+        # Cada 2 turnos, regeneramos el resumen
         if len(self.historial) % self._summary_interval == 0:
             self.actualizar_resumen()
 

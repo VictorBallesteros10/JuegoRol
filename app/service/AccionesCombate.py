@@ -39,13 +39,11 @@ class MecanicaCombate:
             self.es_turno_jugador = False
             return {"tipo": "combate_enemigo", "log": registro}
 
-        # atacar
         _, sublog = self._realizar_ataque(self.jugador, self.enemigo)
         registro.extend(sublog)
         if self.enemigo.vida <= 0:
             return {"tipo": "victoria", "log": registro}
 
-        # cede turno al enemigo
         self.es_turno_jugador = False
         return {"tipo": "combate_enemigo", "log": registro}
 
@@ -61,22 +59,17 @@ class MecanicaCombate:
             huido, msg = self._intentar_huir(self.enemigo)
             registro.append(msg)
             if huido:
-                # huida exitosa
                 return {"tipo": "huida_enemigo", "log": registro}
             else:
-                # huida fallida: cede turno sin atacar
                 self.es_turno_jugador = True
                 return {"tipo": "combate_jugador", "log": registro}
 
-        # Si no intentó huir (o su vida > 3), ataca normalmente
         _, sublog = self._realizar_ataque(self.enemigo, self.jugador)
         registro.extend(sublog)
 
-        # Comprueba si mata al jugador
         if self.jugador.vida <= 0:
             return {"tipo": "muerte", "log": ["Has muerto."]}
 
-        # Tras atacar, vuelve el turno al jugador
         self.es_turno_jugador = True
         return {"tipo": "combate_jugador", "log": registro}
 

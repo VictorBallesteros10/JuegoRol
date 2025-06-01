@@ -64,47 +64,50 @@ class MaestroDeJuegoIA:
         self.contador_decisiones += 1
         siguiente = self.contador_decisiones
         print(siguiente)
-        if siguiente <= 3:
+        if siguiente <= 1:
             return "narrativa"
-        if siguiente == 4:
+        if siguiente == 3:
             return "objeto"
-        if siguiente == 5:
+        if siguiente == 2:
             return "combate"
-        if 6 <= siguiente <= 7:
+        if 4 <= siguiente <= 7:
             return "narrativa"
         if siguiente == 8:
             return "combate_final"
         return "final"
 
-    def iniciar_evento(self, tipo_evento: str) -> dict:
+    def iniciar_evento(self, tipo_evento: str, decision: str) -> dict:
         if tipo_evento == "narrativa":
-            print(f"estoy en narrativa {self.mision_principal} y {self.gestion_historia.devolver_historia()}")
+            contexto_hist = self.gestion_historia.devolver_historia()
             prompt = (
-                f"Continúa la historia de {self.jugador.nombre} en {self.universo}, teniendo muy en cuenta la decision tomada en la respuesta del jugador "
-                f"centrada en {self.mision_principal}. "
+                f"El jugador escribió: «{decision}»\n\n"
+                f"Continúa la historia de {self.jugador.nombre} en {self.universo}, "
+                f"teniendo muy en cuenta esa decisión y el contexto histórico:\n{contexto_hist}\n\n"
                 "Escribe un solo fragmento de prosa, coherente y sin enumerar, "
                 "con sugerencias sutiles de acción."
             )
             frag = self.interfaz_ia.generar_texto(prompt)
-            return {'tipo': 'narrativa', 'texto': self.formatear_narracion(frag)}
+            texto = self.formatear_narracion(frag)
+            self.gestion_historia.registrar_accion(decision, texto)
+            return {'tipo': 'narrativa', 'texto': texto}
 
         if tipo_evento == "objeto":
+            contexto_hist = self.gestion_historia.devolver_historia()
             prompt = (
-                f"Describe en un solo fragmento de prosa cómo {self.jugador.nombre} "
-                f"encuentra un objeto clave para la misión. Sin enumerar, solo el hallazgo con el contexto de {self.gestion_historia.devolver_historia()}"
+                f"El jugador escribió: «{decision}»\n\n"
+                f"Describe en un solo fragmento de prosa cómo {self.jugador.nombre} encuentra un objeto clave para la misión, "
+                f"considerando esa decisión y el contexto histórico:\n{contexto_hist}"
             )
             desc = self.interfaz_ia.generar_texto(prompt)
-            narr = self.formatear_narracion(desc)
-            bonus_attr = random.choice(['fuerza','vida','iniciativa'])
-            bonus_val  = random.randint(1,3)
-            setattr(self.jugador, bonus_attr,
-                    getattr(self.jugador, bonus_attr) + bonus_val)
-            self.jugador.equipamiento.append(
-                f"objeto que otorga +{bonus_val} {bonus_attr}"
-            )
+            texto = self.formatear_narracion(desc)
+            bonus_attr = random.choice(['fuerza', 'vida', 'iniciativa'])
+            bonus_val = random.randint(1, 3)
+            setattr(self.jugador, bonus_attr, getattr(self.jugador, bonus_attr) + bonus_val)
+            self.jugador.equipamiento.append(f"Objeto que otorga +{bonus_val} {bonus_attr}")
+            self.gestion_historia.registrar_accion(decision, texto)
             return {
                 'tipo': 'objeto',
-                'texto': narr,
+                'texto': texto,
                 'bonus': f"+{bonus_val} {bonus_attr}"
             }
 
@@ -113,23 +116,42 @@ class MaestroDeJuegoIA:
             datos = enemigos[idx]
             self.enemigo_actual = Enemigo(**datos)
 
-            # Narración de aparición
+            contexto_hist = self.gestion_historia.devolver_historia()
+            contexto_combate = (
+                f"{contexto_hist}\n"
+                f"El héroe busca: {self.mision_principal}.\n"
+                f"El jugador escribió: «{decision}»."
+            )
+
             prompt_intro = (
-                "Relata en un solo fragmento de prosa la irrupción épica de "
-                f"{self.enemigo_actual.nombre} ante el héroe con el contexto de {self.gestion_historia.devolver_historia()}."
+                "Basándote en el siguiente contexto de la aventura:\n"
+                f"{contexto_combate}\n\n"
+                f"Describe en un fragmento de prosa la irrupción épica de {self.enemigo_actual.nombre} "
+                "ante nuestro protagonista, explicando por qué bloquea su avance hacia el objetivo."
             )
-            intro = self.formatear_narracion(
-                self.interfaz_ia.generar_texto(prompt_intro)
-            )
+            frag_intro = self.interfaz_ia.generar_texto(prompt_intro)
+            intro = self.formatear_narracion(frag_intro)
+            self.gestion_historia.registrar_accion(decision, intro)
 
-            # Inicializamos la mecánica de combate
-            self.mecanica_combate = MecanicaCombate(
-                self.jugador, self.enemigo_actual
-            )
+            self.mecanica_combate = MecanicaCombate(self.jugador, self.enemigo_actual)
             init_log = self.mecanica_combate.iniciar_mecanica_combate()
-            primer_turno = "combate_jugador" if self.mecanica_combate.es_turno_jugador else "combate_enemigo"
 
+            prompt_razon = (
+                "Dado que en la aventura el héroe busca:\n"
+                f"{self.mision_principal}\n"
+                f"Y sabiendo que el enemigo se llama {self.enemigo_actual.nombre}, "
+                "genera un único enunciado que explique por qué este enemigo bloquea el paso "
+                "al héroe en este punto de la misión."
+            )
+            razon = self.interfaz_ia.generar_texto(prompt_razon).strip()
+            init_log.insert(0, f"{self.enemigo_actual.nombre} bloquea el paso al héroe porque {razon}.")
+
+            detalle_inicial = "\n".join(init_log)
+            self.gestion_historia.registrar_accion(decision, detalle_inicial)
+
+            primer_turno = "combate_jugador" if self.mecanica_combate.es_turno_jugador else "combate_enemigo"
             self.combate_activo = True
+
             return {
                 'tipo': primer_turno,
                 'intro': intro,
@@ -137,89 +159,123 @@ class MaestroDeJuegoIA:
             }
 
         if tipo_evento == "final":
+            contexto_hist = self.gestion_historia.devolver_historia()
             prompt_final = (
-                f"Escribe un epílogo evocador para la aventura de {self.jugador.nombre} en el contexto actual de {self.gestion_historia.devolver_historia()} "
-                "en un solo fragmento de prosa, coherente y sin enumerar."
+                f"El jugador escribió: «{decision}»\n\n"
+                f"Escribe un epílogo evocador para la aventura de {self.jugador.nombre} en el contexto actual:\n"
+                f"{contexto_hist}\n\n"
+                "En un solo fragmento de prosa, coherente y sin enumerar."
             )
             cierre = self.interfaz_ia.generar_texto(prompt_final)
-            return {'tipo':'final','texto': self.formatear_narracion(cierre)}
+            texto = self.formatear_narracion(cierre)
+            self.gestion_historia.registrar_accion(decision, texto)
+            return {'tipo': 'final', 'texto': texto}
 
         return {'tipo': tipo_evento, 'texto': ""}
 
     def procesar_decision_jugador(self, decision: str) -> dict:
-        #self.contador_decisiones += 1 no necesario, se gestiona arriba?
 
-        # --- COMBATE ACTIVO ---
         if self.combate_activo:
             mc = self.mecanica_combate
 
-            # TURNO DEL JUGADOR O DEL ENEMIGO
+            # 1) TURNO DEL JUGADOR O DEL ENEMIGO
             if mc.es_turno_jugador:
                 resultado = mc.ejecutar_turno_jugador(decision)
             else:
                 resultado = mc.ejecutar_turno_enemigo()
 
-            # Si sigue en combate, devolvemos directamente
+            # 2) Si el combate continúa, devolvemos directamente el diccionario con 'log' y 'tipo'
             if resultado['tipo'] in ('combate_jugador', 'combate_enemigo'):
                 return resultado
 
-            # Fin de combate, desactivamos
+            # 3) Fin de combate: desactivamos la bandera
             self.combate_activo = False
 
-            # Mapeos de resultados finales de combate
+            # 4) Preparamos el detalle completo del combate (para pasarlo al prompt)
+            detalle_combate = "\n".join(resultado.get('log', []))
+            contexto_hist = self.gestion_historia.devolver_historia()
+            objetivo = self.mision_principal
+
+            # 5) Mapeos de resultados finales de combate
+
+            # 5.1) VICTORIA
             if resultado['tipo'] == 'victoria':
-                outro = self.formatear_narracion(
-                    self.interfaz_ia.generar_texto("Narra las consecuencias de la victoria.")
+                prompt_victoria = (
+                    f"El jugador escribió: «{decision}»\n\n"
+                    f"Contexto de la aventura hasta ahora:\n{contexto_hist}\n\n"
+                    f"Durante el enfrentamiento con {self.enemigo_actual.nombre} sucedió:\n{detalle_combate}\n\n"
+                    "El héroe ha vencido. Narra, en un solo párrafo de prosa coherente y sin enumerar, "
+                    "las consecuencias inmediatas para la misión principal "
+                    f"(que es: {objetivo})."
                 )
-                # Registra la acción y persiste el estado tras la victoria
-                self.gestion_historia.registrar_accion(decision, outro)
+                texto_victoria = self.formatear_narracion(
+                    self.interfaz_ia.generar_texto(prompt_victoria)
+                )
+                # Registrar acción (usamos como clave la propia decision)
+                self.gestion_historia.registrar_accion(decision, texto_victoria)
                 self.persistir_estado()
                 return {
                     'tipo': 'combate_victoria',
                     'log': resultado['log'],
-                    'outro': outro
+                    'outro': texto_victoria
                 }
 
+            # 5.2) HUIDA (jugador o enemigo)
             if resultado['tipo'] in ('huida', 'huida_enemigo'):
-                who = 'jugador' if resultado['tipo'] == 'huida' else 'enemigo'
-                otro_texto = (
+                quien = 'jugador' if resultado['tipo'] == 'huida' else 'enemigo'
+                razon_huida = (
                     f"{self.jugador.nombre} huye del combate."
-                    if who == 'jugador'
+                    if quien == 'jugador'
                     else f"{self.enemigo_actual.nombre} huye del combate."
                 )
-                outro = self.formatear_narracion(
-                    self.interfaz_ia.generar_texto(otro_texto)
+                prompt_huida = (
+                    f"El jugador escribió: «{decision}»\n\n"
+                    f"Contexto de la aventura hasta ahora:\n{contexto_hist}\n\n"
+                    f"Durante el enfrentamiento con {self.enemigo_actual.nombre} sucedió:\n{detalle_combate}\n\n"
+                    f"{razon_huida} Narra, en un solo párrafo de prosa coherente y sin enumerar, "
+                    "las consecuencias de esta huida para la misión principal "
+                    f"(que es: {objetivo})."
                 )
-                # Registrar y persistir también la huida
-                self.gestion_historia.registrar_accion(decision, outro)
+                texto_huida = self.formatear_narracion(
+                    self.interfaz_ia.generar_texto(prompt_huida)
+                )
+                self.gestion_historia.registrar_accion(decision, texto_huida)
                 self.persistir_estado()
                 return {
                     'tipo': 'combate_huido',
                     'log': resultado['log'],
-                    'outro': outro
+                    'outro': texto_huida
                 }
 
+            # 5.3) MUERTE
             if resultado['tipo'] == 'muerte':
-                outro = self.formatear_narracion(
-                    self.interfaz_ia.generar_texto("Narra la muerte del protagonista.")
+                prompt_muerte = (
+                    f"El jugador escribió: «{decision}»\n\n"
+                    f"Contexto de la aventura hasta ahora:\n{contexto_hist}\n\n"
+                    f"Durante el enfrentamiento con {self.enemigo_actual.nombre} sucedió:\n{detalle_combate}\n\n"
+                    "El protagonista muere. Narra en un solo párrafo de prosa evocadora las circunstancias "
+                    "de su muerte, el impacto que tiene en la misión principal "
+                    f"(que es: {objetivo}) y el legado que deja."
                 )
-                # Registrar y persistir la muerte
-                self.gestion_historia.registrar_accion(decision, outro)
+                texto_muerte = self.formatear_narracion(
+                    self.interfaz_ia.generar_texto(prompt_muerte)
+                )
+                self.gestion_historia.registrar_accion(decision, texto_muerte)
                 self.eliminar_partida()
-                return {'tipo': 'muerte', 'texto': outro}
+                return {'tipo': 'muerte', 'texto': texto_muerte}
 
-        # --- FLUJO NARRATIVO / OBJETO / FINAL ---
+        # 6) Si no hay combate activo, pasamos a la siguiente fase normal:
         siguiente = self.determinar_tipo_evento()
-        evento = self.iniciar_evento(siguiente)
+        # Observa que ahora pasamos 'decision' a iniciar_evento para que el prompt de narrativa/objeto lo incluya:
+        evento = self.iniciar_evento(siguiente, decision)
 
-        # Aquí debes registrar el texto que la IA ha generado para este evento
-        # (sea narrativa, objeto o final) y luego persistir el estado.
         respuesta_texto = (
                 evento.get('texto') or
                 evento.get('intro') or
                 evento.get('outro') or
                 ""
         )
+        # Registramos la acción del jugador (texto completo) junto con la respuesta que genera la IA
         self.gestion_historia.registrar_accion(decision, respuesta_texto)
         self.persistir_estado()
 

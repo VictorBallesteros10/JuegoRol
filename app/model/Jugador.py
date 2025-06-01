@@ -14,7 +14,7 @@ class Jugador:
 
     def recibir_dano(self, daño_efectivo):
         self.vida -= daño_efectivo
-        print(f"{self.nombre} ha recibido {daño_efectivo} puntos de daño. Vida restante: {self.vida}")
+
 
     def pasar_armadura(self,penetracion_armadura):
         if penetracion_armadura > self.armadura:
@@ -24,7 +24,7 @@ class Jugador:
 
     def equipar_armadura(self, nueva_armadura):
         self.armadura = nueva_armadura
-        print(f"{self.nombre} ha equipado una nueva armadura de nivel {self.armadura}.")
+
 
     def atacar(self,daño):
         daño_total = self.fuerza + daño
@@ -43,11 +43,6 @@ class Jugador:
         self.iniciativa=+1
         self.vida=+3
         self.fuerza=+3
-
-    def mostrar_equipo(self):
-        print("Equipamiento actual:")
-        for objeto in self.equipamiento:
-            print(f"- {objeto}")
 
     def mostrar_estado(self):
         print(f"Jugador: {self.nombre}")

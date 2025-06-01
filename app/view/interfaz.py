@@ -216,11 +216,16 @@ class IUPrincipalJuego(QWidget):
             self.stt.say(texto)
 
     def iniciar_escritura(self, texto: str):
+        # Detenemos cualquier lectura en curso
+        self.stt.stop()
+        self.is_reading = False  # para resetear el flag
+
         self.texto_pendiente = texto
         self.area_dialogo.append('<p><b style="color:grey;">Narrador:</b> ')
         self.area_dialogo.moveCursor(QTextCursor.MoveOperation.End)
-        if not self.is_reading:
-            self.stt.say(texto)
+
+        # Ahora la siguiente llamada a say() sí se ejecutará
+        self.stt.say(texto)
         self.temporizador_escritura.start()
 
     def escribir_caracter(self):
@@ -328,7 +333,7 @@ class IUPrincipalJuego(QWidget):
         self.stt.setPitch(nuevo)
         self.area_dialogo.append(f'<p><b>Configuración:</b> Tono ajustado a {nuevo:.1f}.</p>')
         self.desplazar_auto()
-        QTimer.singleShot(3000, self.area_dialogio.undo)
+        QTimer.singleShot(3000, self.area_dialogo.undo)
         if not self.is_reading:
             self.stt.say("¡HOLA VIAJERO!")
 
