@@ -178,6 +178,7 @@ class MaestroDeJuegoIA:
         if self.combate_activo:
             mc = self.mecanica_combate
 
+
             # 1) TURNO DEL JUGADOR O DEL ENEMIGO
             if mc.es_turno_jugador:
                 resultado = mc.ejecutar_turno_jugador(decision)
