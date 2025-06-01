@@ -82,6 +82,7 @@ class IUPrincipalJuego(QWidget):
             QTextBrowser p {
                 margin: 1px 0;    
                 line-height: 70%;
+                }
         """)
         # Entrada y botón
         self.campo_entrada = QLineEdit()

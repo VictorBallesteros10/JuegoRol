@@ -66,5 +66,3 @@ class DialogoCreacionPersonaje(QDialog):
 
     def obtener_universo(self) -> str:
         return self.entrada_universo.text().strip() or "Mundo de fanstasía"
-
-#Esto es una locura, pero quizas pueda preguntarle primero al usuario que tipo de historia quiere y luego pasarselo a la IA para que lo tenga en cuenta a la hora de generar la historia y de generar las descripciones de los personajes y de los enemigos y los tipos de raza que puedes elegir para jugar la partida

@@ -27,9 +27,10 @@ def iniciar_juego(self=None):
 
     if id_partida:
         datos = administrador_bd.cargar_partida(id_partida)
-        universo = datos.get("universo", "Mundo de fantasía")
+        duniverso = datos.get("personaje", {})
+        universo = duniverso.get("universo", "Mundo de fantasía")
         historia = datos.get("historia", "")
-
+        print(universo)
         datos_personaje = datos.get("personaje", {})
         datos_personaje.pop("universo", None)
 

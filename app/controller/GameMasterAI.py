@@ -25,11 +25,10 @@ class MaestroDeJuegoIA:
         return f"{texto}"
 
     def obtener_descripcion_entorno(self) -> str:
-        if self.historia: # Si ya hay una historia, la devolvemos
-            self.historia=self.gestion_historia.crear_resumen(self.historia)
+        if self.historia:  # Si ya hay una historia, la devolvemos
+            self.historia = self.gestion_historia.crear_resumen(self.historia)
             return self.historia
         msgs = list(instrucciones)
-
 
         # Añade un sistema con la descripción del entorno
         contenido_entorno = (
@@ -39,16 +38,18 @@ class MaestroDeJuegoIA:
         )
         msgs.append({"role": "system", "content": contenido_entorno})
 
-        # Llama a la IA con la lista de mensajes
+        # Llama a la IA para generar la introducción del entorno
         introduccion = self.interfaz_ia.generar_texto(msgs).strip()
         narr_intro = self.formatear_narracion(introduccion)
 
-        # Ahora planteamos misión principal
-        msgs = list(instrucciones)
+        # Añade la respuesta anterior como parte del contexto
+        msgs.append({"role": "assistant", "content": introduccion})
+
+        # Ahora planteamos la misión principal relacionada con el entorno generado
         contenido_mision = (
             "En ese mismo estilo, plantea la misión principal en un solo "
-            "fragmento de prosa, coherente y sin enumerar. Indica objetivo "
-            "y punto de partida."
+            "fragmento de prosa, coherente con el entorno descrito y sin enumerar. "
+            "Indica el objetivo y el punto de partida del jugador."
         )
         msgs.append({"role": "system", "content": contenido_mision})
 
@@ -64,13 +65,13 @@ class MaestroDeJuegoIA:
         self.contador_decisiones += 1
         siguiente = self.contador_decisiones
         print(siguiente)
-        if siguiente <= 1:
+        if siguiente <= 3:
             return "narrativa"
-        if siguiente == 3:
+        if siguiente == 4:
             return "objeto"
-        if siguiente == 2:
+        if siguiente == 5:
             return "combate"
-        if 4 <= siguiente <= 7:
+        if 6 <= siguiente <= 7:
             return "narrativa"
         if siguiente == 8:
             return "combate_final"
@@ -295,6 +296,7 @@ class MaestroDeJuegoIA:
             "experiencia":  self.jugador.experiencia,
             "nivel":        self.jugador.nivel,
             "equipamiento": self.jugador.equipamiento,
+            "universo":     self.universo,
         }
         self.dao_partidas.guardar_partida(
             self.id_usuario,
